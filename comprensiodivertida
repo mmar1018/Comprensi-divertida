@@ -1,0 +1,523 @@
+
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JUGUEM AMB LES PARAULES!</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #faf6ff;
+  color: #30243d;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+header {
+  background: #8054b5;
+  color: white;
+  text-align: center;
+  padding: 25px 10px;
+}
+
+h1 { font-size: 30px; }
+
+main {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 15px;
+}
+
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 22px;
+  box-shadow: 0 4px 15px #0001;
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  flex-wrap: wrap;
+}
+
+.progress {
+  height: 12px;
+  background: #eadff4;
+  border-radius: 20px;
+  margin: 15px 0;
+  overflow: hidden;
+}
+
+#bar {
+  height: 100%;
+  width: 0;
+  background: #8054b5;
+}
+
+.picture {
+  background: #f3eafa;
+  border-radius: 18px;
+  padding: 10px;
+  text-align: center;
+}
+
+.picture svg {
+  width: 100%;
+  max-height: 250px;
+}
+
+.sentence {
+  font-size: 27px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.5;
+  margin: 25px 5px;
+}
+
+.question {
+  font-size: 21px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.answers {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.answer {
+  background: white;
+  border: 3px solid #d9c4ed;
+  border-radius: 15px;
+  padding: 18px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.answer:disabled { opacity: 1; }
+
+.answer.correct {
+  background: #e3f6e9;
+  border-color: green;
+}
+
+.answer.wrong {
+  background: #ffe8e8;
+  border-color: red;
+}
+
+#feedback {
+  display: none;
+  padding: 18px;
+  margin-top: 20px;
+  border-radius: 15px;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.good { background: #e3f6e9; }
+.bad { background: #ffe8e8; }
+
+.next {
+  display: block;
+  margin: 20px auto;
+  padding: 15px 25px;
+  background: #8054b5;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.next:disabled {
+  opacity: .4;
+}
+
+#finish {
+  display: none;
+  text-align: center;
+}
+
+@media(min-width:600px) {
+  .answers { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>JUGUEM AMB LES PARAULES! 💜</h1>
+  <h3>LECTURA FÀCIL · LLEGEIX, PENSA I TRIA</h3>
+</header>
+
+<main>
+
+<section class="card" id="game">
+
+<div class="info">
+  <span id="number"></span>
+  <span id="score"></span>
+</div>
+
+<div class="progress">
+  <div id="bar"></div>
+</div>
+
+<div class="picture" id="picture"></div>
+
+<div class="sentence" id="sentence"></div>
+
+<div class="question" id="question"></div>
+
+<div class="answers" id="answers"></div>
+
+<div id="feedback"></div>
+
+<button class="next" id="next" disabled>
+  SEGÜENT REPTE →
+</button>
+
+<p style="text-align:center">
+  NO TENS PRESSA! POTS PENSAR TRANQUIL·LAMENT.
+</p>
+
+</section>
+
+<section class="card" id="finish">
+  <h2>🌟 MOLT BÉ! 🌟</h2>
+  <h2 id="result"></h2>
+  <p>HAS LLEGIT, HAS PENSAT I HAS APRÈS!</p>
+  <button class="next" onclick="start()">TORNAR A JUGAR</button>
+</section>
+
+</main>
+
+<script>
+
+const activities = [
+
+{
+text:"LA SARA PORTA UN HIJAB LILA. AVUI FA GIMNÀSTICA.",
+q:"QUÈ FA LA SARA?",
+a:["BALLA","FA GIMNÀSTICA","DORM"],
+c:1,
+why:"LA FRASE DIU QUE LA SARA FA GIMNÀSTICA.",
+img:"girl"
+},
+
+{
+text:"EN NIL VA A L'ESCOLA AMB LA SEVA MOTXILLA.",
+q:"ON VA EN NIL?",
+a:["A LA PLATJA","AL PARC","A L'ESCOLA"],
+c:2,
+why:"EN NIL VA A L'ESCOLA AMB LA MOTXILLA.",
+img:"school"
+},
+
+{
+text:"EL GOS BOBI TÉ SET. BEU AIGUA DEL BOL.",
+q:"QUÈ BEU EN BOBI?",
+a:["AIGUA","SOPA","LLET"],
+c:0,
+why:"QUAN TENIM SET, BEVEM AIGUA.",
+img:"dog"
+},
+
+{
+text:"LA MARE, EL PARE I LA INA SOPEN JUNTS.",
+q:"AMB QUI SOPA LA INA?",
+a:["AMB LA FAMÍLIA","AMB EL GOS","SOLA"],
+c:0,
+why:"LA MARE, EL PARE I LA INA FORMEN UNA FAMÍLIA.",
+img:"family"
+},
+
+{
+text:"FA FRED. L'AVI PREPARA UNA SOPA CALENTA.",
+q:"PER QUÈ PREPARA SOPA CALENTA?",
+a:["PER TENIR CALOR","PER NEDAR","PER JUGAR"],
+c:0,
+why:"UNA SOPA CALENTA ENS AJUDA A ESCALFAR-NOS.",
+img:"soup"
+},
+
+{
+text:"LA SAMIRA TÉ UNA FALDILLA LILA I UNA PILOTA.",
+q:"DE QUIN COLOR ÉS LA FALDILLA?",
+a:["VERDA","LILA","GROGA"],
+c:1,
+why:"LA FRASE DIU QUE LA FALDILLA ÉS LILA.",
+img:"purple"
+},
+
+{
+text:"EN PAU MENJA UNA POMA PER ESMORZAR.",
+q:"QUÈ MENJA EN PAU?",
+a:["UNA POMA","UN ENTREPÀ","UNA SOPA"],
+c:0,
+why:"EN PAU MENJA UNA POMA.",
+img:"apple"
+},
+
+{
+text:"LA LAIA CAU A TERRA. EL GOS S'ACOSTA I LI FA COMPANYIA.",
+q:"COM ES POT SENTIR LA LAIA?",
+a:["ACOMPANYADA","MULLADA","ADORMIDA"],
+c:0,
+why:"EL GOS LI FA COMPANYIA. PER AIXÒ, LA LAIA ES POT SENTIR ACOMPANYADA.",
+img:"dog"
+},
+
+{
+text:"LA CLASSE REGA LES PLANTES DE L'ESCOLA.",
+q:"PER QUÈ REGUEN LES PLANTES?",
+a:["PERQUÈ TINGUIN AIGUA","PERQUÈ TINGUIN SABATES","PERQUÈ FACIN SOROLL"],
+c:0,
+why:"LES PLANTES NECESSITEN AIGUA PER CRÉIXER.",
+img:"plant"
+},
+
+{
+text:"DESPRÉS DE GIMNÀSTICA, LA SARA ESTÀ SUADA I TÉ SET.",
+q:"QUÈ LI ANIRÀ BÉ ARA?",
+a:["UN GOT D'AIGUA","UNA BUFANDA","UNA PILOTA"],
+c:0,
+why:"DESPRÉS DE FER EXERCICI, BEURE AIGUA ÉS UNA BONA IDEA.",
+img:"girl"
+}
+
+];
+
+// IL·LUSTRACIONS SVG INCORPORADES
+
+function illustration(type) {
+
+let drawings = {
+
+girl: `
+<svg viewBox="0 0 400 230">
+<circle cx="200" cy="65" r="32" fill="#c98762"/>
+<path d="M168 65 Q170 15 210 25 Q245 35 232 80 Q200 55 168 65" fill="#7652ad"/>
+<path d="M168 65 Q200 105 232 65 Q240 120 200 130 Q165 115 168 65" fill="#8d69c6"/>
+<path d="M160 130 Q200 110 240 130 L270 220 H130Z" fill="#efb5d0"/>
+<circle cx="188" cy="67" r="4"/>
+<circle cx="212" cy="67" r="4"/>
+<path d="M190 85 Q200 95 210 85" fill="none" stroke="#7b453c" stroke-width="3"/>
+<text x="35" y="65" font-size="35">⭐</text>
+<text x="310" y="70" font-size="35">🤸</text>
+</svg>`,
+
+school: `
+<svg viewBox="0 0 400 230">
+<path d="M50 210 V100 L200 30 L350 100 V210Z" fill="#f5ce82" stroke="#9a6c43" stroke-width="5"/>
+<rect x="165" y="145" width="70" height="65" fill="#8054b5"/>
+<rect x="85" y="120" width="55" height="50" fill="#b9e4f5"/>
+<rect x="260" y="120" width="55" height="50" fill="#b9e4f5"/>
+<text x="130" y="95" font-size="25" fill="#8054b5" font-weight="bold">ESCOLA</text>
+</svg>`,
+
+dog: `
+<svg viewBox="0 0 400 230">
+<ellipse cx="180" cy="160" rx="95" ry="55" fill="#c98a4c"/>
+<circle cx="280" cy="110" r="45" fill="#c98a4c"/>
+<ellipse cx="250" cy="75" rx="18" ry="40" fill="#8d5a32"/>
+<ellipse cx="310" cy="75" rx="18" ry="40" fill="#8d5a32"/>
+<circle cx="265" cy="108" r="4"/>
+<circle cx="295" cy="108" r="4"/>
+<ellipse cx="280" cy="127" rx="10" ry="7"/>
+<text x="50" y="90" font-size="40">🐾</text>
+</svg>`,
+
+family: `
+<svg viewBox="0 0 400 230">
+<circle cx="110" cy="80" r="30" fill="#b97855"/>
+<path d="M75 115 H145 L165 220 H55Z" fill="#5795c7"/>
+<circle cx="205" cy="80" r="30" fill="#e0a078"/>
+<path d="M170 115 H240 L260 220 H150Z" fill="#6eaa75"/>
+<circle cx="300" cy="110" r="25" fill="#c98762"/>
+<path d="M270 140 H330 L345 220 H255Z" fill="#d58bb4"/>
+<text x="175" y="35" font-size="30">♥</text>
+</svg>`,
+
+soup: `
+<svg viewBox="0 0 400 230">
+<path d="M80 110 H320 Q300 220 200 220 Q100 220 80 110Z" fill="#8d69c6"/>
+<ellipse cx="200" cy="110" rx="120" ry="25" fill="#fff0bd" stroke="#7652ad" stroke-width="5"/>
+<path d="M150 90 Q135 55 155 35 M200 90 Q185 55 205 35 M250 90 Q235 55 255 35" fill="none" stroke="#e5a34d" stroke-width="6"/>
+<text x="325" y="180" font-size="35">🥄</text>
+</svg>`,
+
+purple: `
+<svg viewBox="0 0 400 230">
+<path d="M200 60 Q140 10 110 65 Q110 120 200 135 Q290 120 290 65 Q260 10 200 60Z" fill="#8054b5"/>
+<path d="M200 100 L260 185 L200 220 L140 185Z" fill="#b58ade"/>
+<text x="35" y="170" font-size="40">💜</text>
+</svg>`,
+
+apple: `
+<svg viewBox="0 0 400 230">
+<path d="M200 70 Q125 25 105 110 Q90 205 185 215 Q205 220 220 210 Q310 235 320 130 Q325 40 240 65 Q215 75 200 70Z" fill="#e75d62"/>
+<path d="M200 70 Q205 30 230 20" fill="none" stroke="#6b4932" stroke-width="9"/>
+<ellipse cx="250" cy="35" rx="28" ry="12" fill="#6eaa75"/>
+</svg>`,
+
+plant: `
+<svg viewBox="0 0 400 230">
+<path d="M200 200 Q180 110 200 70" stroke="#4e8a4d" stroke-width="9" fill="none"/>
+<path d="M200 135 Q110 50 95 120 Q125 180 200 150 Q280 50 305 120 Q275 180 200 150" fill="#6eaa75"/>
+<rect x="135" y="185" width="130" height="40" rx="8" fill="#bd7952"/>
+<text x="35" y="80" font-size="35">💧</text>
+</svg>`
+};
+
+return drawings[type] || drawings.girl;
+}
+
+let index = 0;
+let score = 0;
+let answered = false;
+
+function render() {
+
+let t = activities[index];
+
+answered = false;
+
+document.getElementById("number").textContent =
+"REPTE " + (index+1) + " DE " + activities.length;
+
+document.getElementById("score").textContent =
+"ENCERTS: " + score;
+
+document.getElementById("bar").style.width =
+(index / activities.length * 100) + "%";
+
+document.getElementById("picture").innerHTML =
+illustration(t.img);
+
+document.getElementById("sentence").textContent = t.text;
+document.getElementById("question").textContent = t.q;
+
+document.getElementById("feedback").style.display = "none";
+
+let box = document.getElementById("answers");
+box.innerHTML = "";
+
+t.a.forEach((answer,i) => {
+
+let button = document.createElement("button");
+
+button.className = "answer";
+button.textContent = answer;
+
+button.onclick = () => choose(i);
+
+box.appendChild(button);
+
+});
+
+document.getElementById("next").disabled = true;
+}
+
+function choose(choice) {
+
+if(answered) return;
+
+answered = true;
+
+let t = activities[index];
+
+let buttons = document.querySelectorAll(".answer");
+
+buttons.forEach((button,i) => {
+
+button.disabled = true;
+
+if(i === t.c) button.classList.add("correct");
+
+else if(i === choice) button.classList.add("wrong");
+
+});
+
+let correct = choice === t.c;
+
+if(correct) score++;
+
+let feedback = document.getElementById("feedback");
+
+feedback.style.display = "block";
+feedback.className = correct ? "good" : "bad";
+
+if(correct) {
+
+feedback.innerHTML =
+"<b>🌟 MOLT BÉ! ÉS CORRECTE!</b><br>" + t.why;
+
+} else {
+
+feedback.innerHTML =
+"<b>💜 HO TORNEM A PENSAR!</b><br>" +
+"LA RESPOSTA CORRECTA ÉS: <b>" +
+t.a[t.c] + "</b><br>" + t.why;
+
+}
+
+document.getElementById("score").textContent =
+"ENCERTS: " + score;
+
+document.getElementById("next").disabled = false;
+
+document.getElementById("next").textContent =
+index === activities.length-1 ?
+"VEURE RESULTAT" : "SEGÜENT REPTE →";
+
+}
+
+document.getElementById("next").onclick = () => {
+
+if(index < activities.length-1) {
+
+index++;
+render();
+
+} else {
+
+document.getElementById("game").style.display = "none";
+
+document.getElementById("finish").style.display = "block";
+
+document.getElementById("result").textContent =
+"HAS FET " + score + " DE " + activities.length + " ENCERTS!";
+
+}
+
+};
+
+function start() {
+
+index = 0;
+score = 0;
+
+document.getElementById("finish").style.display = "none";
+document.getElementById("game").style.display = "block";
+
+render();
+
+}
+
+start();
+
+</script>
+</body>
+</html>
